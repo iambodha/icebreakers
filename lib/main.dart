@@ -31,6 +31,31 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sections = [
+      'Theoretical',
+      'Friendship',
+      'Conflict',
+      'Funny',
+      'Viral Questions',
+      'Best Ice Breakers'
+    ];
+    final icons = [
+      Icons.lightbulb,
+      Icons.people,
+      Icons.warning,
+      Icons.mood,
+      Icons.trending_up,
+      Icons.ac_unit
+    ];
+    final sampleQuestions = [
+      'What is the meaning of life?',
+      'How do you define true friendship?',
+      'How do you handle disagreements?',
+      "What's the funniest joke you know?",
+      'If you could be any animal, what would you be?',
+      "What's your favorite ice cream flavor?"
+    ];
+
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 210,
@@ -78,89 +103,154 @@ class MyHomePage extends StatelessWidget {
         elevation: 0,
       ),
       body: AnimationLimiter(
-        child: GridView.count(
-          crossAxisCount: 2,
+        child: ListView.builder(
+          itemCount: sections.length,
           padding: const EdgeInsets.all(16),
-          children: List.generate(
-            6,
-            (int index) {
-              final sections = [
-                'Theoretical',
-                'Friendship',
-                'Conflict',
-                'Funny',
-                'Viral Questions',
-                'Best Ice Breakers'
-              ];
-              final icons = [
-                Icons.lightbulb,
-                Icons.people,
-                Icons.warning,
-                Icons.mood,
-                Icons.trending_up,
-                Icons.ac_unit
-              ];
-              return AnimationConfiguration.staggeredGrid(
-                position: index,
-                duration: const Duration(milliseconds: 375),
-                columnCount: 2,
-                child: ScaleAnimation(
-                  child: FadeInAnimation(
-                    child: GestureDetector(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text(sections[index]),
-                              content: SizedBox(
-                                width: double.maxFinite,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    TextField(
-                                      decoration: InputDecoration(
-                                        hintText: 'Search questions...',
-                                        prefixIcon: Icon(Icons.search),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16),
-                                    Expanded(
-                                      child: ListView(
-                                        children: [
-                                          Text('What is your name?'),
-                                          SizedBox(height: 8),
-                                          Text('Question 2'),
-                                          SizedBox(height: 8),
-                                          Text('Question 3'),
-                                          // Add more questions here
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+          itemBuilder: (BuildContext context, int index) {
+            return AnimationConfiguration.staggeredList(
+              position: index,
+              duration: const Duration(milliseconds: 375),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Hero(
+                      tag: 'section_$index',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              PageRouteBuilder(
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) =>
+                                        QuestionListPage(
+                                  title: sections[index],
+                                  icon: icons[index],
                                 ),
+                                transitionsBuilder: (context, animation,
+                                    secondaryAnimation, child) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
                               ),
                             );
                           },
-                        );
-                      },
-                      child: Card(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(icons[index], size: 48),
-                            SizedBox(height: 8),
-                            Text(sections[index], textAlign: TextAlign.center),
-                          ],
+                          child: Container(
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF004AAD),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 16),
+                                Icon(icons[index],
+                                    size: 48, color: Colors.white),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        sections[index],
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        sampleQuestions[index],
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
+      ),
+    );
+  }
+}
+
+class QuestionListPage extends StatelessWidget {
+  final String title;
+  final IconData icon;
+
+  const QuestionListPage({Key? key, required this.title, required this.icon})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: const Color(0xFF004AAD),
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search questions...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: AnimationLimiter(
+              child: ListView.builder(
+                itemCount: 20, // Replace with actual question count
+                itemBuilder: (BuildContext context, int index) {
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: SlideAnimation(
+                      verticalOffset: 50.0,
+                      child: FadeInAnimation(
+                        child: ListTile(
+                          leading: Icon(icon),
+                          title: Text('Question ${index + 1}'),
+                          onTap: () {
+                            // Handle question tap
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
