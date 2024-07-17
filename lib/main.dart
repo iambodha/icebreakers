@@ -31,56 +31,54 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: ClipPath(
-          clipper: WaveClipper(),
-          child: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            title: const Text(
-              'Ice Breakers',
-              style: TextStyle(color: Colors.white),
+      appBar: AppBar(
+        toolbarHeight: 210,
+        flexibleSpace: ClipRect(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            heightFactor: 0.7,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/app-bar.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                ),
+                Container(
+                  alignment: Alignment.bottomLeft,
+                  padding: const EdgeInsets.only(
+                      left: 16.0, top: 16.0, right: 16.0, bottom: 84.0),
+                  child: const Text(
+                    'Ice Breakers',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  alignment: Alignment.bottomRight,
+                  padding: const EdgeInsets.only(
+                      left: 16.0, top: 16.0, right: 16.0, bottom: 80.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.account_circle, color: Colors.white),
+                    onPressed: () {
+                      // Add account button functionality here
+                    },
+                  ),
+                ),
+              ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.account_circle, color: Colors.white),
-                onPressed: () {
-                  // Add account button functionality here
-                },
-              ),
-            ],
           ),
         ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: const Center(
         child: Text('Your app content goes here'),
       ),
     );
   }
-}
-
-class WaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height - 10);
-
-    var firstControlPoint = Offset(size.width / 4, size.height);
-    var firstEndPoint = Offset(size.width / 2.25, size.height - 10);
-    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy,
-        firstEndPoint.dx, firstEndPoint.dy);
-
-    var secondControlPoint =
-        Offset(size.width - (size.width / 3.25), size.height - 20);
-    var secondEndPoint = Offset(size.width, size.height - 10);
-    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy,
-        secondEndPoint.dx, secondEndPoint.dy);
-
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
