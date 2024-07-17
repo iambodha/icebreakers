@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,13 +49,13 @@ class MyHomePage extends StatelessWidget {
                 Container(
                   alignment: Alignment.bottomLeft,
                   padding: const EdgeInsets.only(
-                      left: 16.0, top: 16.0, right: 16.0, bottom: 84.0),
+                      left: 16.0, top: 16.0, right: 16.0, bottom: 80.0),
                   child: const Text(
                     'Ice Breakers',
                     style: TextStyle(
+                      fontFamily: 'TT-Bluescreens',
                       color: Colors.white,
-                      fontSize: 24.0,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 40.0,
                     ),
                   ),
                 ),
@@ -76,8 +77,90 @@ class MyHomePage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: const Center(
-        child: Text('Your app content goes here'),
+      body: AnimationLimiter(
+        child: GridView.count(
+          crossAxisCount: 2,
+          padding: const EdgeInsets.all(16),
+          children: List.generate(
+            6,
+            (int index) {
+              final sections = [
+                'Theoretical',
+                'Friendship',
+                'Conflict',
+                'Funny',
+                'Viral Questions',
+                'Best Ice Breakers'
+              ];
+              final icons = [
+                Icons.lightbulb,
+                Icons.people,
+                Icons.warning,
+                Icons.mood,
+                Icons.trending_up,
+                Icons.ac_unit
+              ];
+              return AnimationConfiguration.staggeredGrid(
+                position: index,
+                duration: const Duration(milliseconds: 375),
+                columnCount: 2,
+                child: ScaleAnimation(
+                  child: FadeInAnimation(
+                    child: GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text(sections[index]),
+                              content: SizedBox(
+                                width: double.maxFinite,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextField(
+                                      decoration: InputDecoration(
+                                        hintText: 'Search questions...',
+                                        prefixIcon: Icon(Icons.search),
+                                      ),
+                                    ),
+                                    SizedBox(height: 16),
+                                    Expanded(
+                                      child: ListView(
+                                        children: [
+                                          Text('What is your name?'),
+                                          SizedBox(height: 8),
+                                          Text('Question 2'),
+                                          SizedBox(height: 8),
+                                          Text('Question 3'),
+                                          // Add more questions here
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: Card(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(icons[index], size: 48),
+                            SizedBox(height: 8),
+                            Text(sections[index], textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
