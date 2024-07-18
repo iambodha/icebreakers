@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Text('somanivibbodh@gmail.com'),
               SizedBox(height: 10),
               Text('Developed by: Vibbodh Somani'),
-              Text('Question creation: Bhuvana Reddi and Tia'),
+              Text('Question creation: Bhuvana Reddi'),
             ],
           ),
           actions: <Widget>[
@@ -285,12 +285,21 @@ class QuestionListPage extends StatefulWidget {
 }
 
 class _QuestionListPageState extends State<QuestionListPage> {
-  List<Map<String, dynamic>> questions = [];
+  List<String> questions = [];
+  List<String> filteredQuestions = [];
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadQuestions();
+    searchController.addListener(_filterQuestions);
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadQuestions() async {
@@ -299,9 +308,21 @@ class _QuestionListPageState extends State<QuestionListPage> {
     List<List<dynamic>> csvTable = CsvToListConverter().convert(csvString);
 
     setState(() {
-      questions = csvTable
-          .map((row) => {'question': row[0], 'completed': false})
-          .toList();
+      questions = csvTable.map((row) => row[0].toString()).toList();
+      filteredQuestions = questions;
+    });
+  }
+
+  void _filterQuestions() {
+    String searchTerm = searchController.text.toLowerCase();
+    setState(() {
+      if (searchTerm.isEmpty) {
+        filteredQuestions = questions;
+      } else {
+        filteredQuestions = questions
+            .where((question) => question.toLowerCase().contains(searchTerm))
+            .toList();
+      }
     });
   }
 
@@ -309,7 +330,13 @@ class _QuestionListPageState extends State<QuestionListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(
+          widget.title,
+          style: TextStyle(
+            fontFamily: 'TT-Bluescreens',
+            fontSize: 30, // Adjust size as needed
+          ),
+        ),
         backgroundColor: const Color(0xFF004AAD),
         foregroundColor: Colors.white,
       ),
@@ -318,6 +345,7 @@ class _QuestionListPageState extends State<QuestionListPage> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
+              controller: searchController,
               decoration: InputDecoration(
                 hintText: "Search questions...",
                 prefixIcon: Icon(Icons.search),
@@ -330,22 +358,26 @@ class _QuestionListPageState extends State<QuestionListPage> {
           Expanded(
             child: AnimationLimiter(
               child: ListView.builder(
-                itemCount: questions.length,
+                itemCount: filteredQuestions.length,
                 itemBuilder: (BuildContext context, int index) {
                   return AnimationConfiguration.staggeredList(
                     position: index,
                     duration: const Duration(milliseconds: 375),
-                    child: SlideAnimation(
-                      verticalOffset: 50.0,
-                      child: FadeInAnimation(
-                        child: CheckboxListTile(
-                          title: Text(questions[index]['question']),
-                          value: questions[index]['completed'],
-                          onChanged: (bool? value) {
-                            setState(() {
-                              questions[index]['completed'] = value;
-                            });
-                          },
+                    child: FadeInAnimation(
+                      child: SlideAnimation(
+                        verticalOffset: 50.0,
+                        child: Container(
+                          margin:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: index % 2 == 0
+                                ? Colors.grey[200]
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListTile(
+                            title: Text(filteredQuestions[index]),
+                          ),
                         ),
                       ),
                     ),
