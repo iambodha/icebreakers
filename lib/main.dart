@@ -1,7 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:csv/csv.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const MyApp());
@@ -93,33 +93,13 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _showRandomQuestion(String sectionTitle) async {
-    try {
-      final String csvString = await DefaultAssetBundle.of(context).loadString(
-          'assets/${sectionTitle.toLowerCase().replaceAll(" ", "_")}_questions.csv');
-      List<List<dynamic>> csvTable = CsvToListConverter().convert(csvString);
-
-      // Ensure there are questions available
-      if (csvTable.isNotEmpty) {
-        Random random = Random();
-        int randomIndex = random.nextInt(csvTable.length);
-        String randomQuestion = csvTable[randomIndex][0].toString();
-
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => QuestionListPage(
-              title: sectionTitle,
-              icon: Icons.help_outline,
-              initialQuestion: randomQuestion,
-            ),
-          ),
-        );
-      } else {
-        throw Exception("No questions found in CSV");
-      }
-    } catch (e) {
-      print("Error loading questions: $e");
-      // Handle error loading questions
+  void _launchURL() async {
+    const url =
+        'https://github.com/your-repository'; // Replace with your GitHub repository URL
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
     }
   }
 
@@ -127,6 +107,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     final sections = ["Basic Ice Breakers", "Deep Thought", "Freaky Friends"];
     final icons = [Icons.ac_unit, Icons.lightbulb, Icons.people];
+    final sampleQuestions = [
+      "What's your favorite ice cream flavor?",
+      "What is the meaning of life?",
+      "If you could have any superpower, what would it be?"
+    ];
 
     return Scaffold(
       body: CustomScrollView(
@@ -173,106 +158,144 @@ class _MyHomePageState extends State<MyHomePage> {
             elevation: 0,
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.shuffle, size: 48, color: Colors.blue),
-                    onPressed: () {
-                      // Get the currently visible section's title
-                      String visibleSectionTitle = sections[_scrollController
-                              .offset
-                              .toInt() ~/
-                          100]; // Adjust the division number as per your section height
-                      _showRandomQuestion(visibleSectionTitle);
-                    },
-                  ),
-                  Text(
-                    "Tap the shuffle button for a random question",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: AnimationLimiter(
-              child: ListView.builder(
-                itemCount: sections.length,
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemBuilder: (BuildContext context, int index) {
-                  return AnimationConfiguration.staggeredList(
-                    position: index,
-                    duration: const Duration(milliseconds: 375),
-                    child: SlideAnimation(
-                      verticalOffset: 50.0,
-                      child: FadeInAnimation(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Hero(
-                            tag: 'section_$index',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  _showRandomQuestion(sections[index]);
-                                },
-                                child: Container(
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF004AAD),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const SizedBox(width: 16),
-                                      Icon(icons[index],
-                                          size: 48, color: Colors.white),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              sections[index],
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              "Tap to get a random question",
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 14,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
+            child: AnimatedBuilder(
+              animation: _scrollController,
+              builder: (context, child) {
+                return Container(
+                  color: _backgroundColor,
+                  child: child,
+                );
+              },
+              child: AnimationLimiter(
+                child: ListView.builder(
+                  itemCount: sections.length +
+                      1, // +1 for the "More Coming Soon" section
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index < sections.length) {
+                      return AnimationConfiguration.staggeredList(
+                        position: index,
+                        duration: const Duration(milliseconds: 375),
+                        child: SlideAnimation(
+                          verticalOffset: 50.0,
+                          child: FadeInAnimation(
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: Hero(
+                                tag: 'section_$index',
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        PageRouteBuilder(
+                                          pageBuilder: (context, animation,
+                                                  secondaryAnimation) =>
+                                              QuestionListPage(
+                                            title: sections[index],
+                                            icon: icons[index],
+                                          ),
+                                          transitionsBuilder: (context,
+                                              animation,
+                                              secondaryAnimation,
+                                              child) {
+                                            return FadeTransition(
+                                              opacity: animation,
+                                              child: child,
+                                            );
+                                          },
                                         ),
+                                      );
+                                    },
+                                    child: Container(
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF004AAD),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
-                                      const SizedBox(width: 16),
-                                    ],
+                                      child: Row(
+                                        children: [
+                                          const SizedBox(width: 16),
+                                          Icon(icons[index],
+                                              size: 48, color: Colors.white),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  sections[index],
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  sampleQuestions[index],
+                                                  style: const TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize: 14,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                },
+                      );
+                    } else {
+                      // Placeholder for "More Coming Soon" section
+                      return Container(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        alignment: Alignment.center,
+                        child: Column(
+                          children: [
+                            Text(
+                              'More content coming soon!',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Feel free to contribute on GitHub:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            TextButton.icon(
+                              icon: Icon(Icons.code),
+                              label: Text('GitHub'),
+                              onPressed:
+                                  _launchURL, // Call _launchURL method here
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                ),
               ),
             ),
           ),
@@ -285,14 +308,9 @@ class _MyHomePageState extends State<MyHomePage> {
 class QuestionListPage extends StatefulWidget {
   final String title;
   final IconData icon;
-  final String initialQuestion;
 
-  const QuestionListPage({
-    Key? key,
-    required this.title,
-    required this.icon,
-    required this.initialQuestion,
-  }) : super(key: key);
+  const QuestionListPage({Key? key, required this.title, required this.icon})
+      : super(key: key);
 
   @override
   _QuestionListPageState createState() => _QuestionListPageState();
@@ -320,11 +338,14 @@ class _QuestionListPageState extends State<QuestionListPage> {
     try {
       final String csvString = await DefaultAssetBundle.of(context).loadString(
           'assets/${widget.title.toLowerCase().replaceAll(" ", "_")}_questions.csv');
+      print('CSV String Loaded: $csvString');
       List<List<dynamic>> csvTable = CsvToListConverter().convert(csvString);
+      print('CSV Table: $csvTable');
 
       setState(() {
         questions = csvTable.map((row) => row[0].toString()).toList();
         filteredQuestions = questions;
+        print('Questions Loaded: $questions');
       });
     } catch (e) {
       print("Error loading questions: $e");
@@ -358,27 +379,53 @@ class _QuestionListPageState extends State<QuestionListPage> {
         backgroundColor: const Color(0xFF004AAD),
         foregroundColor: Colors.white,
       ),
-      body: AnimationLimiter(
-        child: ListView.builder(
-          itemCount: filteredQuestions.length,
-          itemBuilder: (BuildContext context, int index) {
-            return AnimationConfiguration.staggeredList(
-              position: index,
-              duration: const Duration(milliseconds: 375),
-              child: SlideAnimation(
-                verticalOffset: 50.0,
-                child: FadeInAnimation(
-                  child: ListTile(
-                    title: Text(filteredQuestions[index]),
-                    onTap: () {
-                      // Handle tapping on a question if needed
-                    },
-                  ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: "Search questions...",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          Expanded(
+            child: AnimationLimiter(
+              child: ListView.builder(
+                itemCount: filteredQuestions.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return AnimationConfiguration.staggeredList(
+                    position: index,
+                    duration: const Duration(milliseconds: 375),
+                    child: FadeInAnimation(
+                      child: SlideAnimation(
+                        verticalOffset: 50.0,
+                        child: Container(
+                          margin:
+                              EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: index % 2 == 0
+                                ? Colors.grey[200]
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListTile(
+                            title: Text(filteredQuestions[index]),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
